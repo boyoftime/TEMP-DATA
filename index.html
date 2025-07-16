@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Pay - User Report</title>
+    
+    <!-- Google Fonts: Lato -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        /* --- Base & Typography --- */
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #50e3c2;
+            --background-color: #f0f2f5;
+            --card-background: #ffffff;
+            --text-dark: #333;
+            --text-light: #6c757d;
+            --border-color: #e8e8e8;
+            --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.05);
+            --shadow-hover: 0 8px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Lato', sans-serif;
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 20px;
+            color: var(--text-dark);
+        }
+
+        /* --- Main Container & Header --- */
+        .container {
+            max-width: 1400px;
+            margin: 20px auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: 900;
+            color: var(--primary-color);
+            margin: 0;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            color: var(--text-light);
+        }
+
+        /* --- Summary Statistics --- */
+        .summary-stats {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--card-background);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-light);
+            text-align: center;
+            flex-grow: 1;
+            min-width: 200px;
+        }
+
+        .stat-card .value {
+            font-size: 2em;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .stat-card .label {
+            font-size: 0.9em;
+            color: var(--text-light);
+            margin-top: 5px;
+        }
+
+        /* --- Controls: Search & Filter --- */
+        .controls-container {
+            background: var(--card-background);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-light);
+            margin-bottom: 30px;
+        }
+        
+        .search-container {
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 1em;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+        }
+        
+        .filter-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 10px 20px;
+            font-size: 0.9em;
+            font-weight: 700;
+            border: 1px solid var(--border-color);
+            background-color: #f8f9fa;
+            color: var(--text-light);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+        }
+        
+        .filter-btn:hover {
+            background-color: #e9ecef;
+            border-color: #d3d9df;
+        }
+        
+        .filter-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* --- User List & Cards --- */
+        .user-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .user-card {
+            background: var(--card-background);
+            border-radius: 12px;
+            box-shadow: var(--shadow-light);
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative; /* Needed for index positioning */
+        }
+        
+        .user-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .card-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 20px;
+            font-size: 1.2em;
+            font-weight: 700;
+        }
+        
+        .user-index {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 0.8em;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 20px;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-row:last-child {
+            border-bottom: none;
+        }
+
+        .data-label {
+            color: var(--text-light);
+            font-size: 0.9em;
+        }
+
+        .data-value {
+            font-weight: 700;
+            font-size: 1em;
+        }
+        
+        .data-value.empty {
+            color: #aaa;
+            font-style: italic;
+            font-weight: 400;
+        }
+
+        .copy-icon {
+            color: #ccc;
+            cursor: pointer;
+            margin-left: 15px;
+            transition: color 0.2s;
+        }
+
+        .copy-icon:hover {
+            color: var(--primary-color);
+        }
+        
+        /* --- Toast Notification --- */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 16px;
+            position: fixed;
+            z-index: 100;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 30px;
+            font-size: 1em;
+            opacity: 0;
+            transition: visibility 0.3s, opacity 0.3s;
+        }
+
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header class="header">
+            <h1>Market Pay User Report</h1>
+            <p>Live data overview with interactive tools</p>
+        </header>
+
+        <section class="summary-stats">
+            <div class="stat-card">
+                <div class="value">410</div>
+                <div class="label">Total Users</div>
+            </div>
+            <div class="stat-card">
+                <div class="value">371,118</div>
+                <div class="label">Total Balance</div>
+            </div>
+            <div class="stat-card">
+                <div class="value">2,110,332</div>
+                <div class="label">Total Gems</div>
+            </div>
+             <div class="stat-card">
+                <div class="value">52</div>
+                <div class="label">Users with ≥ 5000 Gems</div>
+            </div>
+        </section>
+
+        <div class="controls-container">
+            <div class="search-container">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search by username or phone number...">
+            </div>
+            <div class="filter-controls" id="filterControls">
+                <button class="filter-btn active" data-filter="all">All Users</button>
+                <button class="filter-btn" data-filter="high-gems">≥ 5000 Gems</button>
+                <button class="filter-btn" data-filter="zero-gems">0 Gems</button>
+            </div>
+        </div>
+
+        <main class="user-list" id="userList">
+            <!-- User cards will be dynamically inserted here by JavaScript -->
+        </main>
+    </div>
+
+    <!-- Toast Notification Element -->
+    <div id="toast"></div>
+
+    <script>
+        const userData = [
+            { username: "Someless", phone: "+255674100576", balance: "259,785", gems: "608,821", paymentNumber: "0674100576" },
+            { username: "Eliboy22", phone: "+255657643646", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "williams", phone: "+255626392818", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Money", phone: "+255622343194", balance: "2,957", gems: "80,000", paymentNumber: "0761582512" },
+            { username: "Tairo", phone: "+255623969110", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "thobias", phone: "+255696472422", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "EdsonEmmanuel", phone: "+255612712351", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Elly", phone: "+255697610808", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Shadrack", phone: "+255740453778", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Ramadhani2jumanne", phone: "+255615256692", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Gmoney", phone: "+255719792294", balance: "29", gems: "5,500", paymentNumber: "0719792294" },
+            { username: "SAJAM", phone: "+255782556875", balance: "0", gems: "0", paymentNumber: "0782556875" },
+            { username: "dersantos", phone: "+255689169486", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Boniphace", phone: "+255617501969", balance: "0", gems: "0", paymentNumber: "0617501969" },
+            { username: "Younesgrk", phone: "+255656002957", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Khadija", phone: "+255657263394", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Stanslaus", phone: "+255113514369", balance: "0", gems: "0", paymentNumber: "0104524514" },
+            { username: "Miss", phone: "+255627606136", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "AnnahepkoechChrop", phone: "+255729798139", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Pplubinza", phone: "+255773352215", balance: "0", gems: "0", paymentNumber: "0793532215" },
+            { username: "Dizol", phone: "+255699610586", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "nassy2536", phone: "+255624353405", balance: "300", gems: "0", paymentNumber: "0752513405" },
+            { username: "Stephano", phone: "+255679980698", balance: "0", gems: "0", paymentNumber: "0679980698" },
+            { username: "Sammy", phone: "+255695021762", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "DANGOTE", phone: "+255767596938", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "tinsu12", phone: "+255900923980", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Ramadhanimussa", phone: "+255683051112", balance: "0", gems: "5,000", paymentNumber: "0683051112" },
+            { username: "Wilsonboaz", phone: "+255788480579", balance: "3,170", gems: "5,000", paymentNumber: "0692156540" },
+            { username: "SMARTBOY", phone: "+255758391803", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Lucie03", phone: "+255762377799", balance: "2,285", gems: "30,000", paymentNumber: "0762377799" },
+            { username: "Alicevedast", phone: "+255740240364", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Ashuramgaya", phone: "+255657847309", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "UchebeTheDon", phone: "+255652766731", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Sultan123", phone: "+255692152993", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "UchebeTheDon255", phone: "+255783131865", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Handel", phone: "+255967489748", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Enelikawestonmangula", phone: "+255761867080", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Patrick", phone: "+255760367910", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "bora516", phone: "+255708946451", balance: "0", gems: "0", paymentNumber: "0755339864" },
+            { username: "Luwoneka", phone: "+255717361133", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Dion25", phone: "+255712212942", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Josephinepaulo", phone: "+255613040072", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Ramson", phone: "+255719002128", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Kefline", phone: "+255766144617", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "MrD", phone: "+255789332169", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Naphtal", phone: "+255769359662", balance: "0", gems: "0", paymentNumber: "0769359662" },
+            { username: "Jc01", phone: "+255767555600", balance: "346", gems: "170,000", paymentNumber: "0767555600" },
+            { username: "ezennayaemmanuel12@gmail.com", phone: "+255037267169", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "@bebalion", phone: "+255970314936", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Shadybrowntz", phone: "+255678904197", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "joelyoram", phone: "+255783126780", balance: "21", gems: "240,000", paymentNumber: "0783126780" },
+            { username: "Sila", phone: "+255786225822", balance: "640", gems: "5,000", paymentNumber: "0786225822" },
+            { username: "wizzhalfa", phone: "+255773028969", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "BGwala", phone: "+255745216710", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Orwaboy", phone: "+255752341252", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Anthony", phone: "+255787879615", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Raider26", phone: "+255623276470", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Harris", phone: "+255616041782", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Roshni", phone: "+255680080082", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Zungu", phone: "+255613136090", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "GodyWakala", phone: "+255711111110", balance: "10", gems: "130,009", paymentNumber: "0680717171" },
+            { username: "Magambo", phone: "+255621609984", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Mbise", phone: "+255767886198", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Felix", phone: "+255714296016", balance: "210", gems: "5,000", paymentNumber: "0714296016" },
+            { username: "gillian", phone: "+255613126224", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Linah", phone: "+255624791050", balance: "3,150", gems: "5,000", paymentNumber: "0744758151" },
+            { username: "F3aeR04@25", phone: "+255695836307", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Mwenga", phone: "+255766398330", balance: "0", gems: "0", paymentNumber: "0766398330" },
+            { username: "Marz", phone: "+255628389651", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "GEAZI", phone: "+255768802700", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Mady", phone: "+255627143017", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Emmanuelmax", phone: "+255653806127", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "bernadethamateru@gmail.com", phone: "+255683232344", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Mpetajr23", phone: "+255717193438", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Nyando255", phone: "+255758220022", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Sally6819", phone: "+255713922670", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Salmeen69", phone: "+255782391679", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Gyna", phone: "+255625775125", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "nasy2536", phone: "+255752513405", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Nath12", phone: "+255693089668", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Andrew0077", phone: "+255756235861", balance: "0", gems: "0", paymentNumber: "0756235861" },
+            { username: "Haeich", phone: "+255673302526", balance: "0", gems: "0", paymentNumber: "0673302526" },
+            { username: "Brox_vibes_80k", phone: "+255613075303", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Matwanji", phone: "+255711337449", balance: "0", gems: "0", paymentNumber: "0711337449" },
+            { username: "Hamisi", phone: "+255765532294", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "song", phone: "+255689894600", balance: "0", gems: "0", paymentNumber: "0689894600" },
+            { username: "kamwaya255", phone: "+255757343403", balance: "0", gems: "0", paymentNumber: "0757343403" },
+            { username: "musha01", phone: "+255711645917", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Maclean", phone: "+255743068898", balance: "0", gems: "0", paymentNumber: "0743068898" },
+            { username: "Saviour06", phone: "+255752427729", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "nestory", phone: "+255787438510", balance: "8,621", gems: "130,000", paymentNumber: "0787438510" },
+            { username: "Israelki", phone: "+255628475521", balance: "0", gems: "0", paymentNumber: "0628475521" },
+            { username: "Mseseboy", phone: "+255679460366", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Reesecollection", phone: "+255775462838", balance: "0", gems: "0", paymentNumber: "0775462838" },
+            { username: "Kevi", phone: "+255653620303", balance: "2,320", gems: "30,000", paymentNumber: "0653620303" },
+            { username: "Alliiz", phone: "+255658125138", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Romaboy", phone: "+255762756704", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "kassimlimo", phone: "+255658700641", balance: "0", gems: "0", paymentNumber: "0658700641" },
+            { username: "Nassir", phone: "+255629804388", balance: "0", gems: "0", paymentNumber: "0774769902" },
+            { username: "human", phone: "+255765049403", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "fmramba", phone: "+255767300479", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Brielle", phone: "+255768888916", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Kunta26", phone: "+255617501372", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Mancipate", phone: "+255679833131", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Maingu", phone: "+255775640602", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "February", phone: "+255783808003", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "11111111", phone: "+255653525357", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Hamisimgunda.", phone: "+255656424212", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Tanzania123", phone: "+255619039660", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Justinishauri", phone: "+255614097521", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Clever", phone: "+255716580173", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Mwenda", phone: "+255793614569", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Oneil777", phone: "+255758122555", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "FilbertallyMwasama", phone: "+255753481993", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "maurus24", phone: "+255752410021", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Antelmi", phone: "+255763857840", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "marcky", phone: "+255624356805", balance: "0", gems: "0", paymentNumber: "0624356805" },
+            { username: "Mashauri", phone: "+255617886909", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Vickydee", phone: "+255740030330", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Gabon", phone: "+255766826982", balance: "353", gems: "10,000", paymentNumber: "0766826982" },
+            { username: "Care255", phone: "+255628097542", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Jovankatz255", phone: "+255741535329", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Roymoses", phone: "+255719116252", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Jellyjan", phone: "+255621450708", balance: "0", gems: "0", paymentNumber: "0621450708" },
+            { username: "Josephsekazoya", phone: "+255756136000", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Ngao1", phone: "+255752267702", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "HappinessGabriel", phone: "+255763163974", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Yonapaulo", phone: "+255712122220", balance: "0", gems: "0", paymentNumber: "0712122220" },
+            { username: "Wkitemi04", phone: "+255759643682", balance: "0", gems: "0", paymentNumber: "0759643682" },
+            { username: "IPINI", phone: "+255715758500", balance: "0", gems: "0", paymentNumber: "0715758500" },
+            { username: "Mrisho", phone: "+255628826816", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Haurejr", phone: "+255652507852", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Jason", phone: "+255756378359", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "BONI10", phone: "+255753322461", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Stephanege", phone: "+255621458112", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Gewajumann", phone: "+255699082600", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "James", phone: "+255654013280", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Amani", phone: "+255781005006", balance: "0", gems: "0", paymentNumber: "0781005006" },
+            { username: "Momey", phone: "+255713226678", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "@emma92", phone: "+255615466087", balance: "680", gems: "10,000", paymentNumber: "0763966087" },
+            { username: "Pixelus", phone: "+255766939156", balance: "0", gems: "0", paymentNumber: "0766939156" },
+            { username: "Godfrey", phone: "+255623949187", balance: "0", gems: "0", paymentNumber: "0623949187" },
+            { username: "Mringo50", phone: "+255756319797", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Benjaminik", phone: "+255765992930", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Abdyllahy", phone: "+255774040600", balance: "0", gems: "0", paymentNumber: "0774040600" },
+            { username: "Pius", phone: "+255753393037", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Ezekiel", phone: "+255695063721", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Elihuru", phone: "+255755663957", balance: "0", gems: "0", paymentNumber: "0755663957" },
+            { username: "Isaya12", phone: "+255775950750", balance: "0", gems: "0", paymentNumber: "0775950750" },
+            { username: "Mwamy", phone: "+255687444432", balance: "0", gems: "0", paymentNumber: "0687444432" },
+            { username: "Shafii2596", phone: "+255744579854", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Willy70", phone: "+255780408936", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "REDILU", phone: "+255683560913", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Ngao", phone: "+255776184100", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "hizzymwaij", phone: "+255761659653", balance: "0", gems: "0", paymentNumber: "0761659653" },
+            { username: "Icecode", phone: "+255744649495", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Ochu47", phone: "+255765746549", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "David19", phone: "+255753334738", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "KULAYA24", phone: "+255760605318", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Mood", phone: "+255757324539", balance: "0", gems: "0", paymentNumber: "0757324539" },
+            { username: "Joachim", phone: "+255754056968", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "VIRICARDY", phone: "+255789716563", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Max08", phone: "+255755974684", balance: "51", gems: "30,000", paymentNumber: "0755974684" },
+            { username: "JAGOKI2025", phone: "+255679021788", balance: "10,522", gems: "170,000", paymentNumber: "0679021788" },
+            { username: "GNX", phone: "+255699349285", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Lycer8118", phone: "+255616234821", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Furaha", phone: "+255674515999", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Kasebula89", phone: "+255755946294", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Evancetz", phone: "+255697491155", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Mbwanje123", phone: "+255767979278", balance: "270", gems: "10,000", paymentNumber: "0767979278" },
+            { username: "Sarisa", phone: "+255755745219", balance: "343", gems: "80,000", paymentNumber: "0774345219" },
+            { username: "Ethan2020", phone: "+255719441825", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "YUSUPHU196", phone: "+255756858557", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Kendi@79", phone: "+255712464030", balance: "44,000", gems: "130,000", paymentNumber: "0712464030" },
+            { username: "Changa255", phone: "+255683440439", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Mganiadela", phone: "+255675547556", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "princedavy", phone: "+255763338877", balance: "0", gems: "0", paymentNumber: "0763338877" },
+            { username: "KAMOTA01", phone: "+255711945604", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "MWAKAMELA", phone: "+255783975331", balance: "0", gems: "0", paymentNumber: "0783975331" },
+            { username: "paulo60", phone: "+255625344989", balance: "655", gems: "10,000", paymentNumber: "0625344989" },
+            { username: "Lee38", phone: "+255676197738", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Ntemianeth", phone: "+255717620700", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Sampsongod", phone: "+255114278311", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Macod995", phone: "+255715915242", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Wasa", phone: "+255682828021", balance: "0", gems: "1,000", paymentNumber: "0682828021" },
+            { username: "Lovelast", phone: "+255750889086", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Huu2022", phone: "+255678190622", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "babanoreen", phone: "+255744052787", balance: "0", gems: "0", paymentNumber: "0744052787" },
+            { username: "Ngosha33", phone: "+255714867204", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "IssaMajid", phone: "+255679462343", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "bosslady", phone: "+255615095255", balance: "0", gems: "0", paymentNumber: "0615095255" },
+            { username: "Samsonlugu", phone: "+255672514917", balance: "3,635", gems: "30,000", paymentNumber: "0672514917" },
+            { username: "Lulu", phone: "+255716647425", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Divana", phone: "+255719608060", balance: "5,288", gems: "170,000", paymentNumber: "0719608060" },
+            { username: "EMMA511451", phone: "+255716511451", balance: "18", gems: "80,000", paymentNumber: "0716511451" },
+            { username: "Sebastianj", phone: "+255696431973", balance: "0", gems: "0", paymentNumber: "0696431973" },
+            { username: "Madebekwan", phone: "+255674197961", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "oxnoell", phone: "+255768970415", balance: "85", gems: "170,000", paymentNumber: "0768970415" },
+            { username: "Rita", phone: "+255789141092", balance: "1,893", gems: "30,000", paymentNumber: "0789141092" },
+            { username: "Juju25", phone: "+255744452040", balance: "1,118", gems: "30,000", paymentNumber: "0744452040" },
+            { username: "Bardah2002", phone: "+255616155891", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Amanyuba8@", phone: "+255740414090", balance: "0", gems: "0", paymentNumber: "0740414090" },
+            { username: "Mwangoda", phone: "+255682199876", balance: "0", gems: "0", paymentNumber: "0682199876" },
+            { username: "Nayer", phone: "+255757205113", balance: "0", gems: "0", paymentNumber: "0757205113" },
+            { username: "Winfrida", phone: "+255758781307", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Desar", phone: "+255759310111", balance: "711", gems: "30,000", paymentNumber: "0759310111" },
+            { username: "agnes1992", phone: "+255622500412", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Efanti", phone: "+255626727566", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "winfrida", phone: "+255768781307", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Machamki", phone: "+255785803435", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "D.Jeyson", phone: "+255685690666", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Tchid", phone: "+255741142634", balance: "0", gems: "0", paymentNumber: "0741142634" },
+            { username: "Chiddy", phone: "+255766186820", balance: "0", gems: "0", paymentNumber: "0766186820" },
+            { username: "Mkuti", phone: "+255627991408", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Ghanima", phone: "+255777073552", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "fredrickdu", phone: "+255754912305", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Zech", phone: "+255683214695", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Charles", phone: "+255742640588", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "KIZZY@2004", phone: "+255680674146", balance: "0", gems: "0", paymentNumber: "0680674146" },
+            { username: "KASIANALEX", phone: "+255615987100", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Madadi", phone: "+255615914098", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Gee", phone: "+255754368136", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Lyneth", phone: "+255740383800", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Charminar5", phone: "+255756807781", balance: "0", gems: "0", paymentNumber: "0756807781" },
+            { username: "YohanaMasa", phone: "+255758707016", balance: "0", gems: "0", paymentNumber: "0758707016" },
+            { username: "Zubedami70", phone: "+255761003618", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Msumizi", phone: "+255622493092", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Grolia", phone: "+255740850787", balance: "631", gems: "10,000", paymentNumber: "0740850787" },
+            { username: "Minah", phone: "+255744653102", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Getrude999", phone: "+255746988945", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Baraka", phone: "+255680537756", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Mtwaridijj", phone: "+255765051890", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Aristarick", phone: "+255628009842", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Harny09", phone: "+255758694040", balance: "486", gems: "80,000", paymentNumber: "0758694040" },
+            { username: "Christophe", phone: "+255767917171", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "johnjoseph", phone: "+255717244750", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Daddy", phone: "+255685275595", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "REHEMA", phone: "+255694463340", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Kaneluhwag", phone: "+255697927449", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Floramush", phone: "+255764216275", balance: "46", gems: "80,000", paymentNumber: "0764216275" },
+            { username: "Sultan", phone: "+255764737575", balance: "59", gems: "590,000", paymentNumber: "0764737575" },
+            { username: "ghostking1", phone: "+255719632816", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Jerry21", phone: "+255741611838", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Iyang", phone: "+255622606676", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Lizzy", phone: "+255768261317", balance: "19", gems: "130,000", paymentNumber: "0768261317" },
+            { username: "IdarusHam", phone: "+255772983812", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "MWAJABURAM", phone: "+255071676608", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Akinyi123!", phone: "+255788835990", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Bitesa", phone: "+255674782701", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Bmlinus", phone: "+255683856257", balance: "0", gems: "0", paymentNumber: "0683856257" },
+            { username: "Viery", phone: "+255710606835", balance: "300", gems: "5,002", paymentNumber: "0710606835" },
+            { username: "mudrick57", phone: "+255685285457", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "lucy", phone: "+255652283590", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Abdul", phone: "+255763400623", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "655006670", phone: "+255655006670", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Nailajah", phone: "+255674771443", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Stickmpepo", phone: "+255620893026", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Sweetkessy", phone: "+255742021899", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Khalik00", phone: "+255766401530", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "GiftMacha", phone: "+255693111183", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Dx2024", phone: "+255766466365", balance: "0", gems: "0", paymentNumber: "0766466365" },
+            { username: "Fela8979", phone: "+255740010150", balance: "0", gems: "0", paymentNumber: "0740010150" },
+            { username: "Dhlm", phone: "+255767299167", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Ramer", phone: "+255714372375", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "micah", phone: "+255617072784", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Mayangomaa", phone: "+255756626169", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Chacharith", phone: "+255769355186", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Mmbaga", phone: "+255713733250", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Baroboy", phone: "+255713779497", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Nahumu", phone: "+255710737585", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Mkama", phone: "+255753671658", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Billionel", phone: "+255714200569", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "30Curry", phone: "+255767328784", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "MWADILI", phone: "+255689642602", balance: "0", gems: "0", paymentNumber: "0689642602" },
+            { username: "Ethan72", phone: "+255742616704", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Deusjohn", phone: "+255745511420", balance: "84", gems: "80,000", paymentNumber: "0745511420" },
+            { username: "Didah9696", phone: "+255654122083", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "msukwaanet", phone: "+255767601188", balance: "0", gems: "5,000", paymentNumber: "0767601188" },
+            { username: "Kimichi", phone: "+255750616390", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "byaese", phone: "+255759524706", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Faudhia", phone: "+255622209076", balance: "4,500", gems: "30,000", paymentNumber: "0622209076" },
+            { username: "Meliki", phone: "+255744793400", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Lubuvapml", phone: "+255752076356", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Angela2025", phone: "+255763320088", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "maulid", phone: "+255659454314", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Slimgirl", phone: "+255747595980", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Salehe", phone: "+255713358939", balance: "0", gems: "0", paymentNumber: "0713358939" },
+            { username: "Lojoma96", phone: "+255756049523", balance: "65", gems: "80,000", paymentNumber: "0623129984" },
+            { username: "Hilary", phone: "+255712586537", balance: "9", gems: "80,000", paymentNumber: "0712586537" },
+            { username: "Enitha", phone: "+255768759889", balance: "56", gems: "80,000", paymentNumber: "0768759889" },
+            { username: "Johex22", phone: "+255764339400", balance: "112", gems: "80,000", paymentNumber: "0764339400" },
+            { username: "Female25", phone: "+255676578157", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Harith.c", phone: "+255746885290", balance: "524", gems: "80,000", paymentNumber: "0746885290" },
+            { username: "Owen2003", phone: "+255744894458", balance: "5,009", gems: "80,000", paymentNumber: "0744894458" },
+            { username: "0767971746", phone: "+255767971746", balance: "2,500", gems: "80,000", paymentNumber: "0767971746" },
+            { username: "missbos", phone: "+255689389233", balance: "65", gems: "80,000", paymentNumber: "0689389233" },
+            { username: "Shapala", phone: "+255696607456", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Hadija", phone: "+255744766131", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Alex", phone: "+255764658281", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "JaesaJunio", phone: "+255793581840", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Amicus", phone: "+255746202671", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "mosuna", phone: "+255698835004", balance: "0", gems: "0", paymentNumber: "0698835004" },
+            { username: "DYZZOBOY", phone: "+255764043971", balance: "0", gems: "0", paymentNumber: "0764043971" },
+            { username: "salmaraja", phone: "+255764374487", balance: "900", gems: "10,000", paymentNumber: "0764374487" },
+            { username: "Jokermonst", phone: "+255777302691", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "someless", phone: "+255783446814", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Gracelee6", phone: "+255718086667", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Goodluck", phone: "+255764066979", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Fatuma", phone: "+255715375906", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Israel", phone: "+255743474946", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Katemba", phone: "+255763533407", balance: "0", gems: "0", paymentNumber: "0763533407" },
+            { username: "Shigongo71", phone: "+255748711111", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Elizah", phone: "+255657887171", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Hassani", phone: "+255618206669", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "shinelongo", phone: "+255620248411", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Restituta", phone: "+255617950276", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Loyce", phone: "+255756563891", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Deus68", phone: "+255673176592", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Lutfia", phone: "+255621724025", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "mathewmsuy", phone: "+255757745096", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "gilibert11", phone: "+255621939525", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Mayo12", phone: "+255764699873", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Rojas1", phone: "+255757095620", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Stopper", phone: "+255685081236", balance: "0", gems: "0", paymentNumber: "0685081236" },
+            { username: "Raza", phone: "+255655741447", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Nancy", phone: "+255747916739", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Ernesta", phone: "+255658450281", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Amigo❤️", phone: "+255673044545", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "fifiana", phone: "+255786561818", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "JuliusTho", phone: "+255678394864", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Johsix", phone: "+255758700501", balance: "0", gems: "0", paymentNumber: "0758700501" },
+            { username: "Marsden", phone: "+255741089862", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Minahmoo", phone: "+255746735255", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "mangujoshu", phone: "+255758259495", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Tyna", phone: "+255687201811", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Abubakari9", phone: "+255717706661", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Devid1959", phone: "+255674045471", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Faustini", phone: "+255766111190", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "agyenewa", phone: "+255718677422", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "0743484052", phone: "+255743484052", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Amoss24", phone: "+255622612020", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Emmanuel20", phone: "+255618121380", balance: "600", gems: "10,000", paymentNumber: "0618121380" },
+            { username: "Mwalingojr", phone: "+255763415399", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "makdadaz", phone: "+255763142515", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "mesha123", phone: "+255752298343", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "khadijamny", phone: "+255748191362", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Neema1", phone: "+255753875238", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Mayunga", phone: "+255712999234", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Reyna", phone: "+255785091713", balance: "0", gems: "0", paymentNumber: "0785091713" },
+            { username: "Samwel", phone: "+255717122668", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Ibrahim", phone: "+255656543495", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Men", phone: "+255754648730", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Zainabu", phone: "+255715398163", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Kilo55", phone: "+255748751201", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "noel2024", phone: "+255769954591", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Song", phone: "+255693111212", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Kija", phone: "+255759413379", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "051hasly", phone: "+255741943915", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Reymah", phone: "+255620650310", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Dijah", phone: "+255756856709", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "It'sTrina", phone: "+255626893994", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Asha", phone: "+255750988064", balance: "150", gems: "5,000", paymentNumber: "0750988064" },
+            { username: "Mr.oddity", phone: "+255625597340", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "kiwale", phone: "+255699730949", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "beatricema", phone: "+255764577487", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Ridhiwani", phone: "+255793397541", balance: "0", gems: "0", paymentNumber: "0793397541" },
+            { username: "Jaysson255", phone: "+255744386677", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Mjombakala", phone: "+255758904540", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "yonasmaiko", phone: "+255623305471", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Amina", phone: "+255658425420", balance: "600", gems: "10,000", paymentNumber: "0658425420" },
+            { username: "Asma", phone: "+255753096079", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Marselina", phone: "+255693001064", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "mageree3", phone: "+255618430709", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Wayne03", phone: "+255625032990", balance: "0", gems: "5,000", paymentNumber: "N/A" },
+            { username: "Charles8", phone: "+255793597670", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "mrmbatina", phone: "+255695221150", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "My❤", phone: "+255746659740", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "FADHILIKAT", phone: "+255679757621", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Declare", phone: "+255740762667", balance: "0", gems: "0", paymentNumber: "0740762667" },
+            { username: "MASAYI", phone: "+255719295781", balance: "0", gems: "0", paymentNumber: "0719295781" },
+            { username: "Hamicsele", phone: "+255712284837", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "ABUBA55", phone: "+255749526557", balance: "0", gems: "0", paymentNumber: "0749526557" },
+            { username: "Mikoyo", phone: "+255715809667", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "0676540724", phone: "+255676540724", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Shekwavi", phone: "+255061913068", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Geraldkipa", phone: "+255617352746", balance: "0", gems: "30,000", paymentNumber: "N/A" },
+            { username: "Ndututz", phone: "+255761417361", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Chief_joh", phone: "+255740416637", balance: "0", gems: "0", paymentNumber: "0740416637" },
+            { username: "Chief77", phone: "+255688700600", balance: "0", gems: "0", paymentNumber: "0741955197" },
+            { username: "Thefool", phone: "+255744418148", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Marando", phone: "+255679116333", balance: "0", gems: "0", paymentNumber: "0679116333" },
+            { username: "Marsden024", phone: "+255760384944", balance: "0", gems: "0", paymentNumber: "0760384944" },
+            { username: "Mdalasini", phone: "+255769592017", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "icon09", phone: "+255787169359", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Mpombo@481", phone: "+255794542702", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "FUBUBRAND", phone: "+255697878936", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Dolphin87", phone: "+255756901145", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "FrankYeye", phone: "+255747717962", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Bravo47", phone: "+255740473737", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Sokia24", phone: "+255769645741", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Miriammbo", phone: "+255743436136", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "paschal25", phone: "+255788056094", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Moseskatin", phone: "+255696146324", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "CHAZI", phone: "+255761797940", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "FrankStan", phone: "+255767598843", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Kulwa8", phone: "+255755864143", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Comfy", phone: "+255617904164", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "Dee", phone: "+255679689710", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "praise", phone: "+255716071326", balance: "0", gems: "0", paymentNumber: "N/A" },
+            { username: "werghjhgfd", phone: "+255111111111", balance: "0", gems: "0", paymentNumber: "N/A" }
+        ];
+
+        const userList = document.getElementById('userList');
+        const searchInput = document.getElementById('searchInput');
+        const filterControls = document.getElementById('filterControls');
+        let toastTimeout;
+        let activeFilter = 'all';
+
+        // --- Helper to parse numbers with commas ---
+        function parseNumber(str) {
+            return parseInt(str.replace(/,/g, ''), 10) || 0;
+        }
+
+        // --- Function to show a toast notification ---
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000); // Hide after 2 seconds
+        }
+
+        // --- Function to handle the copy action ---
+        function handleCopy(event) {
+            const target = event.target;
+            if (target.classList.contains('copy-icon')) {
+                const valueElement = target.previousElementSibling;
+                const textToCopy = valueElement.textContent;
+                const dataType = target.dataset.type;
+
+                if (textToCopy && textToCopy !== 'N/A') {
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        showToast(`${dataType} copied!`);
+                    }).catch(err => {
+                        console.error('Failed to copy: ', err);
+                        showToast('Failed to copy.');
+                    });
+                } else {
+                    showToast('Nothing to copy.');
+                }
+            }
+        }
+
+        // --- Function to render user cards ---
+        function renderUsers(usersToRender) {
+            userList.innerHTML = ''; // Clear the list
+            if (usersToRender.length === 0) {
+                userList.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: #888;">No users found matching your criteria.</p>';
+                return;
+            }
+            
+            usersToRender.forEach((user, index) => {
+                const card = document.createElement('div');
+                card.className = 'user-card';
+                card.innerHTML = `
+                    <div class="card-header">
+                        ${user.username}
+                        <span class="user-index">#${index + 1}</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="data-row">
+                            <span class="data-label">Phone</span>
+                            <div>
+                                <span class="data-value">${user.phone}</span>
+                                <i class="fas fa-copy copy-icon" data-type="Phone number"></i>
+                            </div>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Balance</span>
+                             <div>
+                                <span class="data-value">${user.balance}</span>
+                                <i class="fas fa-copy copy-icon" data-type="Balance"></i>
+                            </div>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Gems</span>
+                            <div>
+                                <span class="data-value">${user.gems}</span>
+                                <i class="fas fa-copy copy-icon" data-type="Gems"></i>
+                            </div>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Payment Number</span>
+                            <div>
+                                <span class="data-value ${user.paymentNumber === 'N/A' ? 'empty' : ''}">${user.paymentNumber}</span>
+                                <i class="fas fa-copy copy-icon" data-type="Payment number"></i>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                userList.appendChild(card);
+            });
+        }
+        
+        // --- Central function to apply all filters and render ---
+        function applyFiltersAndRender() {
+            const searchQuery = searchInput.value.toLowerCase();
+            let filteredData = userData;
+
+            // 1. Apply the gem filter
+            if (activeFilter === 'high-gems') {
+                filteredData = userData.filter(user => parseNumber(user.gems) >= 5000);
+            } else if (activeFilter === 'zero-gems') {
+                filteredData = userData.filter(user => parseNumber(user.gems) === 0);
+            }
+
+            // 2. Apply the search filter on the already-filtered data
+            if (searchQuery) {
+                filteredData = filteredData.filter(user => {
+                    return user.username.toLowerCase().includes(searchQuery) || user.phone.includes(searchQuery);
+                });
+            }
+
+            renderUsers(filteredData);
+        }
+
+        // --- Event Listeners ---
+        document.addEventListener('DOMContentLoaded', () => {
+            applyFiltersAndRender(); // Initial render
+        });
+
+        searchInput.addEventListener('keyup', applyFiltersAndRender);
+        userList.addEventListener('click', handleCopy);
+        
+        filterControls.addEventListener('click', (event) => {
+            const target = event.target;
+            if (target.tagName === 'BUTTON') {
+                // Update active button style
+                filterControls.querySelector('.active').classList.remove('active');
+                target.classList.add('active');
+                
+                // Update active filter state
+                activeFilter = target.dataset.filter;
+                
+                // Re-render the list
+                applyFiltersAndRender();
+            }
+        });
+
+    </script>
+
+</body>
+</html>
